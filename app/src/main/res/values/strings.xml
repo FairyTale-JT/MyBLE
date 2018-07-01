@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">录入设备号demo</string>
+    <string name="search">搜索设备</string>
+    <string name="shuru">录入</string>
+</resources>
