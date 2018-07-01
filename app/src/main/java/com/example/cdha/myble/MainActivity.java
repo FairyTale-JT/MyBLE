@@ -2,6 +2,7 @@ package com.example.cdha.myble;
 
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -33,10 +34,14 @@ import com.inuker.bluetooth.library.search.response.SearchResponse;
 import com.inuker.bluetooth.library.utils.BluetoothLog;
 import com.inuker.bluetooth.library.utils.ByteUtils;
 import com.inuker.bluetooth.library.utils.StringUtils;
+import com.tbruyelle.rxpermissions2.Permission;
+import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import io.reactivex.functions.Consumer;
 
 import static com.example.cdha.utils.ToastUtils.showError;
 import static com.example.cdha.utils.ToastUtils.showInfo;
@@ -50,7 +55,7 @@ import static com.inuker.bluetooth.library.Constants.STATUS_CONNECTED;
 
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemClickListener {
-    private static String LOGTAG = "BLE_MainActivity";
+    private static String TAG = "BLE_MainActivity";
     private ListView BLE_list;
     private LinearLayout search_linear;
     private LinearLayout luru_linear;
@@ -69,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         initView();
         isBuleBLE();
+        requestPermissions();
     }
 
     /**
@@ -84,11 +90,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         luru_linear = (LinearLayout) findViewById(R.id.luru_linear);
         luru_linear.setOnClickListener(this);
 
-        if (Build.VERSION.SDK_INT >= 23) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 10);
-            }
-        }
     }
 
     /**
@@ -315,4 +316,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     };
+
+    /**
+     * TODO  获取定位，相机权限
+     */
+    @SuppressLint("CheckResult")
+    private void requestPermissions(){
+        RxPermissions rxPermissions =new RxPermissions(MainActivity.this);
+        rxPermissions.requestEach(Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.CAMERA).subscribe(new Consumer<Permission>() {
+            @Override
+            public void accept(Permission permission) throws Exception {
+                if (permission.granted) {
+                    // 用户已经同意该权限
+                    Log.d(TAG, permission.name + " is granted.");
+                } else if (permission.shouldShowRequestPermissionRationale) {
+                    showInfo(MainActivity.this,"拒绝权限，会导致无法正常使用");
+                    // 用户拒绝了该权限，没有选中『不再询问』（Never ask again）,那么下次再次启动时，还会提示请求权限的对话框
+                    Log.d(TAG, permission.name + " is denied. More info should be provided.");
+                } else {
+                    // 用户拒绝了该权限，并且选中『不再询问』
+                    showInfo(MainActivity.this,"拒绝权限，会导致无法正常使用");
+                    Log.d(TAG, permission.name + " is denied.");
+                }
+            }
+        });
+    }
 }
